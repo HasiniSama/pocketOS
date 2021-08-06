@@ -78,6 +78,22 @@ void serial_configure_modem(unsigned short com);
  */
 int serial_is_transmit_fifo_empty(unsigned short com);
 
+/** write:
+ *  writes the contents of the buffer buf of length len to the screen
+ *
+ *  @param buf  Buffer that has contents to be written to screen
+ *  @param len  Length of buffer
+ */
+int serial_write(unsigned short com, char *buf, unsigned int len);
+
+/** serial_write_byte:
+ *  Write byte data to given serial port
+ *
+ *  @param port Serial port to which data has to be written
+ * @param byte_data 8 bit data
+ */
+void serial_write_byte(unsigned short port, char byteData);
+
 /** serial_configure:
  *  Configure serial port
  *
