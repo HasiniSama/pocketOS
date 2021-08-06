@@ -43,8 +43,18 @@
         outb(FB_DATA_PORT,    pos & 0x00FF);
     }
     
+    int write(char *buf, unsigned int len){
+    	unsigned int i;
+    	for(i = 0; i<len; i++){
+    		fb_write_cell(i*2, *(buf+i), LIGHT_GREY, BLUE);
+    		fb_move_cursor(2);
+    	}
+    	return i;
+    }
 
     void kmain(){
-    	fb_write_cell(0, 'A', LIGHT_GREY, BLUE);
-    	fb_move_cursor(2);
+    
+       char buffer[] = "Hello Reader! How are you today?";
+       write(buffer,sizeof(buffer));
+       
     }
