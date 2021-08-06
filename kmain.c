@@ -3,7 +3,7 @@
 
 void kmain(){
     
-	char buffer[] = "Hello Reader! How are you today?";
+	char buffer[] = "   A world of dew,   And within every dewdrop   A world of struggle";
 	fb_write(buffer,sizeof(buffer));
        
 	serial_configure(SERIAL_COM1_BASE, Baud_115200);
