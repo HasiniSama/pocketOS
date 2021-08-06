@@ -76,7 +76,14 @@ void serial_configure_modem(unsigned short com);
  *  @return 0 if the transmit FIFO queue is not empty
  *          1 if the transmit FIFO queue is empty
  */
+int serial_is_transmit_fifo_empty(unsigned short com);
 
+/** serial_configure:
+ *  Configure serial port
+ *
+ *  @param port Serial port which needs to be configured
+ * @param baudRate rate at which data needs to be transmitted
+ */
 void serial_configure(unsigned short port, unsigned short baudRate);
 
 #endif /* INCLUDE_IO_H */
