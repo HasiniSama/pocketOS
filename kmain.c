@@ -3,7 +3,7 @@
 
 void kmain(){
     
-	char buffer[] = "   A world of dew,   And within every dewdrop   A world of struggle";
+	char buffer[] = "Welcome to pocketOS!";
 	fb_write(buffer,sizeof(buffer));
        
 	serial_configure(SERIAL_COM1_BASE, Baud_115200);
