@@ -49,8 +49,8 @@ void gdt_set_gate(int index, unsigned int base_address, unsigned int limit, unsi
 void init_gdt()
 {
 	gdt_ptr_t gdt_ptr;
-	gdt_ptr.limit = (sizeof(gdt_entry_t) * 3) - 1;
-	gdt_ptr.base = (unsigned int)&gdt_entries;
+	gdt_ptr.size = (sizeof(gdt_entry_t) * 3) - 1;
+	gdt_ptr.address = (unsigned int)&gdt_entries;
 
   	gdt_set_gate(0, 0, 0, 0, 0);                // Null segment
   	
