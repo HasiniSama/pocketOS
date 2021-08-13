@@ -1,12 +1,22 @@
-#include "frame_buffer.c"
-#include "serial_port.c"
+#include "drivers/frame_buffer.c"
+#include "drivers/serial_port.c"
+#include "segmentation/memory_segments.h"
 
+/* Function to initialize */
+void init() {
+  /* Initialize segment descriptor tables */
+  init_gdt();
+
+  /* Initialize serial port */
+  serial_configure(SERIAL_COM1_BASE, Baud_115200);
+}
+
+/* Kernel Main */
 void kmain(){
-    
-	char buffer[] = "   A world of dew,   And within every dewdrop   A world of struggle";
+    	init();
+	char buffer[] = "Welcome to pocketOS!";
+	
 	fb_write(buffer,sizeof(buffer));
-       
-	serial_configure(SERIAL_COM1_BASE, Baud_115200);
-  	serial_write(SERIAL_COM1_BASE, buffer, sizeof(buffer));
+	serial_write(SERIAL_COM1_BASE, buffer, sizeof(buffer));
   	
 }
