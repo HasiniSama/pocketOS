@@ -14,11 +14,13 @@ void fb_write_cell(unsigned int i, char c, unsigned char fg, unsigned char bg) {
 	fb[i + 1] = ((fg & 0x0F) << 4) | (bg & 0x0F);
 }
 
-int fb_write(char *buf, unsigned int len){
-    	unsigned int i;
-    	for(i = 0; i<len; i++){
-	    	fb_write_cell(i*2, *(buf+i), LIGHT_GREY, BLUE);
+void fb_write(char c, unsigned int i){
+	    	fb_write_cell(i*2, c, LIGHT_GREY, BLUE);
 	    	fb_move_cursor(2);
-    	}
-    	return i;
+}
+
+void fb_clear(unsigned int i){
+
+  fb_write_cell(i*2, ' ', BLACK, BLACK);
+  
 }
