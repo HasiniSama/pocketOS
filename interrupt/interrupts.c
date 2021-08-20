@@ -1,7 +1,6 @@
 #include "interrupts.h"
 #include "pic.h"
 #include "../drivers/io.h"
-#include "../drivers/serial_port.h"
 #include "../drivers/frame_buffer.c"
 #include "keyboard.h"
 
@@ -10,6 +9,8 @@
  
 struct IDTDescriptor idt_descriptors[INTERRUPTS_DESCRIPTOR_COUNT];
 struct IDT idt;
+
+unsigned int BUFFER_COUNT;
 
 void interrupts_init_descriptor(int index, unsigned int address)
 {
@@ -60,12 +61,16 @@ void interrupt_handler(__attribute__((unused)) struct cpu_state cpu, unsigned in
 
 			if (scan_code <= KEYBOARD_MAX_ASCII) {
 				ascii = keyboard_scan_code_to_ascii(scan_code);
-				serial_configure_baud_rate(SERIAL_COM1_BASE, 4);
-				serial_configure_line(SERIAL_COM1_BASE);
 				char str[1];
 				str[0] = ascii;
-				serial_write(SERIAL_COM1_BASE,str, 1);
-
+				if(scan_code == 14 ){
+					BUFFER_COUNT--;
+					fb_clear(BUFFER_COUNT);
+				}
+				else{
+					fb_write(str[0],BUFFER_COUNT);
+					BUFFER_COUNT++;
+				}
 			}
 
 			pic_acknowledge(interrupt);

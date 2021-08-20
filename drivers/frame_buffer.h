@@ -13,6 +13,7 @@
 #define FB_LOW_BYTE_COMMAND 15
 
 /* Frame buffer supported color value */
+#define BLACK      0
 #define BLUE       1
 #define LIGHT_GREY 7
 
@@ -37,9 +38,16 @@ void fb_write_cell(unsigned int i, char c, unsigned char fg, unsigned char bg);
 /** write:
  *  writes the contents of the buffer buf of length len to the screen
  *
- *  @param buf  Buffer that has contents to be written to screen
- *  @param len  Length of buffer
+ *  @param c  character that needs to be written to screen
+ *  @param i  number of total characters written on the framebuffer
  */
-int fb_write(char *buf, unsigned int len);
+void fb_write(char c, unsigned int i);
+
+/** clear:
+ *  clears the previous content of the buffer and move the cursor back
+ *
+ *  @param i    number of total characters written on the framebuffer
+ */
+void fb_clear(unsigned int i);
 
 #endif /* INCLUDE_IO_H */
