@@ -1,7 +1,7 @@
 #include "interrupts.h"
 #include "pic.h"
-#include "../drivers/io.h"
-#include "../drivers/frame_buffer.c"
+#include "../io/io.h"
+#include "../frame_buffer/fb.c"
 #include "keyboard.h"
 
 #define INTERRUPTS_DESCRIPTOR_COUNT 256 

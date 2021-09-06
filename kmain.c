@@ -1,7 +1,8 @@
-#include "drivers/serial_port.c"
-#include "segmentation/memory_segments.h"
-#include "interrupt/interrupts.h"
+#include "drivers/serial_port/serial.c"
+#include "memory/segmentation/memory_segments.h"
+#include "drivers/interrupts/interrupts.h"
 #include "multiboot.h"
+#include "memory/paging/paging.h"
 
 /* Function to initialize */
 void init() {
@@ -13,6 +14,9 @@ void init() {
   
   /* Initialize idt */
   interrupts_install_idt();
+  
+  /* Initialize paging */
+  init_paging();
 }
 
 /* Kernel Main */
