@@ -1,6 +1,6 @@
 #include "isr.h"
 #include "string.h"
-#include "../drivers/io/io.h"
+#include "../io/io.h"
 
 
 #define PIC1            0x20    /* IO base address for master PIC */
