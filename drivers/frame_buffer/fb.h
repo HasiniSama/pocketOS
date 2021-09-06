@@ -2,7 +2,7 @@
 #define INCLUDE_FRAMEBUFFER_H
 
 #pragma once
-#include "io.h"
+#include "../io/io.h"
 
 /* The I/O ports */
 #define FB_COMMAND_PORT 0x3D4

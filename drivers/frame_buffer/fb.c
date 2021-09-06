@@ -1,4 +1,4 @@
-#include "frame_buffer.h"	
+#include "fb.h"	
 
 static char *fb = (char *)0x000B8000;
 
