@@ -2,7 +2,7 @@
 #define INCLUDE_KHEAP_H
 
 #pragma once
-#include "../../utils/types.h"
+#include "../../utils/type.h"
 
 /* set_physical_address_top:
  * set the top of physical address global variable. This is required to keep

@@ -1,6 +1,6 @@
 #include "kheap.h"
 
-u32int g_CurrentVirtualAddressTop = 0;
+u32int g_CurrentPhysicalAddressTop = 0;
 
 void set_physical_address_top(u32int phyAddress) {
   g_CurrentPhysicalAddressTop = (u32int)&phyAddress;
