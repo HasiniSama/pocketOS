@@ -3,4 +3,3 @@ timeout=5
 
 title os
 kernel /boot/kernel.elf
-module /modules/program
