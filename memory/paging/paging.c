@@ -46,10 +46,10 @@ static void clear_frame(u32int frameAddr) {
 // Static function to find the first free frame.
 static s32int first_frame() {
   u32int i, j;
-  for (i = 0; i < INDEX_FROM_BIT(nframes); i++) {
+   for (i = 0; i < INDEX_FROM_BIT(nframes); ++i) {
     if (frames[i] != 0xFFFFFFFF) {
       // at least one bit is free here.
-      for (j = 0; j < 32; j++) {
+       for (j = 0; j < 32; ++j) {
         u32int toTest = 0x1 << j;
         if (!(frames[i] & toTest)) {
           return ((i * 32) + j);
@@ -90,22 +90,24 @@ void free_frame(page_t *page) {
   }
 }
 
-void custom_memset(u32int *address, u32int val, u32int size) {
-  for (u32int i = 0; i < size; i++) {
+void custom_memset(u8int *address, u32int val, u32int size) {
+  for (u32int i = 0; i < size; ++i) {
     *address = val;
     ++address;
   }
 }
 
-void initialise_paging() {
+void init_paging(u32int kernelPhysicalEnd) {
+
+  set_physical_address_top(kernelPhysicalEnd);
   /* The size of physical memory.
    * Assuming it is 16MB big
    */
   u32int mem_end_page = 0x1000000;
 
   nframes = mem_end_page / 0x1000;
-  frames = (u32int *)kmalloc(INDEX_FROM_BIT(nframes));
-  custom_memset(frames, 0, INDEX_FROM_BIT(nframes));
+  frames = (u32int *)kmalloc(INDEX_FROM_BIT(nframes) + 1);
+  custom_memset((u8int *)frames, 0, INDEX_FROM_BIT(nframes));
 
   // Let's make a page directory.
   g_kernelDirectory = (page_directory_t *)kmalloc_a(sizeof(page_directory_t));
@@ -153,6 +155,7 @@ page_t *get_page(u32int address, u8int make, page_directory_t *dir) {
     u32int tmp;
     dir->tables[tableIdx] =
         (page_table_t *)kmalloc_ap(sizeof(page_table_t), &tmp);
+        custom_memset((u8int *)dir->tables[tableIdx], 0, 0x1000);
     // PRESENT, RW, US.
     dir->tablesPhysical[tableIdx] = tmp | 0x7;
     return &dir->tables[tableIdx]->pages[address % 1024];

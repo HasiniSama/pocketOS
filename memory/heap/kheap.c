@@ -2,8 +2,8 @@
 
 u32int g_CurrentPhysicalAddressTop = 0;
 
-void set_physical_address_top(u32int phyAddress) {
-  g_CurrentPhysicalAddressTop = (u32int)&phyAddress;
+void set_physical_address_top(u32int kernelPhysicalEnd) {
+  g_CurrentPhysicalAddressTop = kernelPhysicalEnd;
 }
 
  u32int kmalloc_int(u32int size, u32int align, u32int *pAddrPtr) {
