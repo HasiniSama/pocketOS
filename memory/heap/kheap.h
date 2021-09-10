@@ -11,7 +11,7 @@
  *
   *  @param phyAddress Current Address End, we get this from linker script. script.
  */
-void set_physical_address_top(u32int phyAddress);
+ void set_physical_address(u32int kerNelPhysicalStart, u32int kernelPhysicalEnd);
 
 /* kmalloc_int:
  *  Allocate a chunk of memory, size in size. If align == 1,
