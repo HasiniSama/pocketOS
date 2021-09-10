@@ -90,13 +90,6 @@ void free_frame(page_t *page) {
   }
 }
 
-void custom_memset(u8int *address, u32int val, u32int size) {
-  for (u32int i = 0; i < size; ++i) {
-    *address = val;
-    ++address;
-  }
-}
-
 void init_paging(u32int kernelPhysicalEnd) {
 
   set_physical_address_top(kernelPhysicalEnd);
