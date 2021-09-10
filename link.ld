@@ -26,5 +26,5 @@ SECTIONS {
         *(.bss)              /* all bss sections from all files */
     }
 
-    KERNEL_PHYSICAL_END = . - 0x00100000;
+    KERNEL_PHYSICAL_END = .;
 }
