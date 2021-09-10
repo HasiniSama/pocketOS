@@ -13,6 +13,7 @@ u32int *frames;
 u32int nframes;
 
 // Defined in kheap.c
+extern u32int g_KerNelPhysicalAddressStart;
 extern u32int g_CurrentPhysicalAddressTop;
 
 // Macros used in the bitset algorithms.
@@ -61,8 +62,8 @@ static s32int first_frame() {
   return -1;
 }
 
-// Function to allocate a frame.
-void alloc_frame(page_t *page, u32int isKernel, u32int isWriteable) {
+// Function to allocate a frame with identity map.
+void alloc_frame_identity(page_t *page, u32int isKernel, u32int isWriteable) {
   if (page->frame != 0) {
     return;
   } else {
@@ -72,6 +73,22 @@ void alloc_frame(page_t *page, u32int isKernel, u32int isWriteable) {
       }
     }
     set_frame(idx * 0x1000);
+    page->present = 1;
+    page->rw = (isWriteable) ? 1 : 0;
+    page->user = (isKernel) ? 0 : 1;
+    page->frame = idx;
+  }
+}
+
+void alloc_frame_virtual(page_t *page, u32int physicalAddress, u32int isKernel,
+                         u32int isWriteable) {
+  if (page->frame != 0) {
+    return;
+  } else {
+    u32int idx = first_frame();
+    set_frame(idx * 0x1000);
+
+    idx = ((physicalAddress / 0x1000) / 32) + ((physicalAddress / 0x1000) % 32);
     page->present = 1;
     page->rw = (isWriteable) ? 1 : 0;
     page->user = (isKernel) ? 0 : 1;
@@ -90,15 +107,16 @@ void free_frame(page_t *page) {
   }
 }
 
-void init_paging(u32int kernelPhysicalEnd) {
+ void init_paging(u32int kerNelPhysicalStart, u32int kernelPhysicalEnd) {
 
-  set_physical_address_top(kernelPhysicalEnd);
+   set_physical_address(kerNelPhysicalStart, kernelPhysicalEnd);
   /* The size of physical memory.
-   * Assuming it is 16MB big
+   * Assuming it is 16MB big setting memEndPage to 16MB + 3GB so that we can
+   * relocate kernel to 3GB
    */
-  u32int mem_end_page = 0x1000000;
+  u32int memEndPage = 0xC1000000;
 
-  nframes = mem_end_page / 0x1000;
+  nframes = memEndPage / 0x1000;
   frames = (u32int *)kmalloc(INDEX_FROM_BIT(nframes) + 1);
   custom_memset((u8int *)frames, 0, INDEX_FROM_BIT(nframes));
 
@@ -111,9 +129,23 @@ void init_paging(u32int kernelPhysicalEnd) {
    * enabled.
    */
   u32int i = 0;
+  
+  while (i < (g_KerNelPhysicalAddressStart & 0xFFFFF000)) {
+    /* identity map 1 MB which is BIOS */
+    alloc_frame_identity(get_page(i, 1, g_kernelDirectory), 0, 0);
+    i += 0x1000;
+  }
+  
   while (i < g_CurrentPhysicalAddressTop) {
     // Kernel code is readable but not writeable from userspace.
     alloc_frame(get_page(i, 1, g_kernelDirectory), 0, 0);
+    /* Since we have already relocated kernel to 1MB after 3GB in linker script,
+     * we can add entry to page table by adding 3Gb to all the physical
+     * address.
+     * Kernel code is readable but not writeable from userspace.
+     */
+    alloc_frame_virtual(get_page(i + 0xC0100000, 1, g_kernelDirectory), i, 0,
+                        0);
     i += 0x1000;
   }
   // Before we enable paging, we must register our page fault handler.
