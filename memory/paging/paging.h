@@ -1,37 +1,72 @@
-#ifndef __PAGING_H__
-#define __PAGING_H__
+#ifndef INCLUDE_PAGING_H
+#define INCLUDE_PAGING_H
 
-#include <stdint.h>
+#pragma once
+#include "../../utils/type.h"
 
-struct directory {
-  uint8_t present:1;        // bit 0: always 1
-  uint8_t rw:1;             // bit 1: read/write
-  uint8_t us:1;             // bit 2: user or supervisor
-  uint8_t pwt:1;            // bit 3: page-level write-through
-  uint8_t pcd:1;            // bit 4: page-level cache disable
-  uint8_t a:1;              // bit 5: accessed
-  uint8_t ignored:1;        // bit 6:
-  uint8_t ps:1;             // bit 7: page size, 0=4KB 1=4MB, must be 0 for this struct
-  uint8_t ignored2:4;       // bit 8 - 11
-  uint32_t page_table:20;   // bit 12 - 31: physical address of 4KB aligned page table referenced by this entry
-} __attribute__((packed));
-typedef struct directory directory_t;
+typedef struct page {
+  /* Page is present in memory if set */
+  u32int present : 1;
 
-struct page {
-  uint8_t present:1;        // bit 0: always 1
-  uint8_t rw:1;             // bit 1: read/write
-  uint8_t us:1;             // bit 2: user or supervisor
-  uint8_t pwt:1;            // bit 3: page-level write-through
-  uint8_t pcd:1;            // bit 4: page-level cache disable
-  uint8_t a:1;              // bit 5: accessed
-  uint8_t d:1;              // bit 6: dirty
-  uint8_t pat:1;            // bit 7: must be 0 unless PAT supported
-  uint8_t g:1;              // bit 8: global translation
-  uint8_t ignored2:3;       // bit 9 - 11
-  uint32_t page_frame:20;   // bit 12 - 31: physical address of 4KB page frame
-} __attribute__((packed));
-typedef struct page page_t;
+  /* Read-only if clear, readwrite if set */
+  u32int rw : 1;
 
-void init_paging();
+  /* Supervisor level only if clear */
+  u32int user : 1;
 
-#endif
+  /* Page been accessed since last refresh if set */
+  u32int accessed : 1;
+
+  /* Page been written to since last refresh if set */
+  u32int dirty : 1;
+
+  /* Amalgamation of unused and reserved bits */
+  u32int unused : 7;
+
+  /* Frame address (shifted right 12 bits). Since the frames are aligned at 4kb
+   * least 12 bits are always zero.
+   */
+  u32int frame : 20;
+} page_t;
+
+typedef struct page_table {
+  page_t pages[1024];
+} page_table_t;
+
+typedef struct page_directory {
+  /*
+   * Array of pointers to pagetables.
+   */
+  page_table_t *tables[1024];
+
+  /*
+   * Array of pointers to the pagetables above, but gives their *physical*
+   * location, for loading into the CR3 register.
+   */
+  u32int tablesPhysical[1024];
+
+  /*
+   * The physical address of tablesPhysical. This comes into play when we get
+   * our kernel heap allocated and the directory may be in a different location
+   * in virtual memory.
+   */
+  u32int physicalAddr;
+} page_directory_t;
+
+/*
+ * Sets up the environment, page directories etc and enables paging.
+ */
+ void init_paging(u32int kernelPhysicalEnd);
+
+/*
+ * Causes the specified page directory to be loaded into the CR3 register.
+ */
+void switch_page_directory(page_directory_t *new);
+
+/*
+ * Retrieves a pointer to the page required. If make == 1, if the page-table in
+ * which this page should reside isn't created, create it!
+ */
+page_t *get_page(u32int address, u8int make, page_directory_t *dir);
+
+#endif /* INCLUDE_PAGING_H */

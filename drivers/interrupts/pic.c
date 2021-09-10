@@ -13,7 +13,7 @@
   *
   *  @param num The number of the interrupt
   */
-void pic_acknowledge(unsigned int interrupt)
+void pic_acknowledge(u32int interrupt)
 {
 	if (interrupt < PIC_1_OFFSET || interrupt > PIC_2_END) {
 		return;
@@ -32,7 +32,7 @@ arguments:
 		vectors on the master become offset1..offset1+7
 	offset2 - same for slave PIC: offset2..offset2+7
 */
-void pic_remap(int offset1, int offset2)
+void pic_remap(s32int offset1, s32int offset2)
 {
 	outb(PIC_1_COMMAND, PIC_ICW1_INIT + PIC_ICW1_ICW4);	// starts the initialization sequence (in cascade mode)
 	outb(PIC_2_COMMAND, PIC_ICW1_INIT + PIC_ICW1_ICW4);

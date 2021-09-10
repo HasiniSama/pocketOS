@@ -1,111 +1,165 @@
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-
 #include "paging.h"
-#include "string.h"
-#include "../heap/memory.h"
-#include "../../utils/log.h"
-#include "../../drivers/interrupts/isr.h"
-#include "../../drivers/serial_port/serial.h"
+#include "../heap/kheap.h"
+#include "../../drivers/interrupts/interrupts.h"
 
-extern directory_t boot_page_directory; // pre-allocated by nasm (also page aligned)
+// The kernel's page directory
+page_directory_t *g_kernelDirectory = 0;
 
-uint32_t frame_allocations[32767];
+// The current page directory;
+page_directory_t *g_currentDirectory = 0;
 
-#define PAGE_FRAME_SIZE 4096
+// A bitset of frames - used or free.
+u32int *frames;
+u32int nframes;
 
-// addr must be page aligned
-static bool test_frame(uint32_t addr) {
-  uint32_t frame = addr / PAGE_FRAME_SIZE;
-  uint32_t frame_word = frame / 32;
-  uint32_t bit_offset = frame % 32;
-  return  (frame_allocations[frame_word] >> bit_offset) & 1;
+// Defined in kheap.c
+extern u32int g_CurrentPhysicalAddressTop;
+
+// Macros used in the bitset algorithms.
+#define INDEX_FROM_BIT(a) (a / 32)
+#define OFFSET_FROM_BIT(a) (a % 32)
+
+// Static function to set a bit in the frames bitset
+static void set_frame(u32int frameAddr) {
+  u32int frame = frameAddr / 0x1000;
+  u32int idx = INDEX_FROM_BIT(frame);
+  u32int off = OFFSET_FROM_BIT(frame);
+  frames[idx] |= (0x1 << off);
 }
 
-// addr must be page aligned
-static void set_frame(uint32_t addr) {
-  uint32_t frame = addr / PAGE_FRAME_SIZE;
-  uint32_t frame_word = frame / 32;
-  uint32_t bit_offset = frame % 32;
-  frame_allocations[frame_word] |= (1 << bit_offset);
+// Static function to clear a bit in the frames bitset
+static void clear_frame(u32int frameAddr) {
+  u32int frame = frameAddr / 0x1000;
+  u32int idx = INDEX_FROM_BIT(frame);
+  u32int off = OFFSET_FROM_BIT(frame);
+  frames[idx] &= ~(0x1 << off);
 }
 
-// addr must be page aligned
-static void clear_frame(uint32_t addr) {
-  uint32_t frame = addr / PAGE_FRAME_SIZE;
-  uint32_t frame_word = frame / 32;
-  uint32_t bit_offset = frame % 32;
-  frame_allocations[frame_word] &= ~(1 << bit_offset);
+// // Static function to test if a bit is set.
+// static u32int test_frame(u32int frameAddr) {
+//   u32int frame = frameAddr / 0x1000;
+//   u32int idx = INDEX_FROM_BIT(frame);
+//   u32int off = OFFSET_FROM_BIT(frame);
+//   return (frames[idx] & (0x1 << off));
+// }
+
+// Static function to find the first free frame.
+static s32int first_frame() {
+  u32int i, j;
+   for (i = 0; i < INDEX_FROM_BIT(nframes); ++i) {
+    if (frames[i] != 0xFFFFFFFF) {
+      // at least one bit is free here.
+       for (j = 0; j < 32; ++j) {
+        u32int toTest = 0x1 << j;
+        if (!(frames[i] & toTest)) {
+          return ((i * 32) + j);
+        }
+      }
+    }
+  }
+  // nothing free
+  return -1;
 }
 
-void handle_page_fault(registers_t regs) {
-  debug("Page fault!");
-}
-
-#define PAGE_READONLY   0
-#define PAGE_READWRITE  1
-#define PAGE_USER       1
-#define PAGE_KERNEL     0
-#define PAGE_SIZE_4KB   0
-#define PAGE_SIZE_4MB   1
-
-void map(directory_t *page_directory, uint32_t vaddr, uint32_t paddr) {
-  debug("\nidentity mapping %x-%x\n", addr & 0xfffff000, (addr & 0xfffff000) + 0x1000 - 1);
-
-  uint32_t directory_offset = vaddr >> 22; // 31:22
-  uint32_t table_offset = (vaddr >> 12) & 0x3ff; // 21:12
-  debug("\tdirectory offset: %x\n", directory_offset);
-  debug("\ttable offset: %x\n", table_offset);
-
-  directory_t *directory = &page_directory[directory_offset/4];
-  page_t *table;
-  // debug("kernel page directory resides at %x\n", page_directory);
-  if (!directory->present) {
-    // debug("configuring new page directory entry with index %i at %x\n", directory_offset, directory);
-    directory->present = 1;
-    directory->rw = PAGE_READWRITE;
-    directory->us = PAGE_KERNEL;
-    directory->ps = PAGE_SIZE_4KB;
-
-    table = (page_t*)kmalloc_page(); // sizeof(page_t)*1024 == 0x1000
-    memset(table, 0, 0x1000);
-
-    directory->page_table = (uint32_t)table >> 12; // table base (20 high bits)
-    debug("directory->page_table is now %x\n", directory->page_table << 12);
+// Function to allocate a frame.
+void alloc_frame(page_t *page, u32int isKernel, u32int isWriteable) {
+  if (page->frame != 0) {
+    return;
   } else {
-    table = (page_t*)(directory->page_table << 12);
-    debug("c directory->page_table already exists at %x\n", table);
-  }
-
-  page_t *page = &table[table_offset];
-  if (!page->present) {
-    debug("configuring new page table entry at %x\n", page);
+    u32int idx = first_frame();
+    if (idx == (u32int)-1) {
+      while (1) {
+      }
+    }
+    set_frame(idx * 0x1000);
     page->present = 1;
-    page->rw = PAGE_READWRITE;
-    page->us = PAGE_KERNEL;
+    page->rw = (isWriteable) ? 1 : 0;
+    page->user = (isKernel) ? 0 : 1;
+    page->frame = idx;
   }
-
-  page->page_frame = paddr >> 12; // frame base (20 high bits)
-  debug("page %x is now mapped to frame %x\n", addr, page->page_frame << 12);
-  set_frame(paddr);
 }
 
-extern void load_page_directory(directory_t *directory);
-extern void enable_paging();
+// Function to deallocate a frame.
+void free_frame(page_t *page) {
+  u32int frame;
+  if (!(frame = page->frame)) {
+    return;
+  } else {
+    clear_frame(frame);
+    page->frame = 0x0;
+  }
+}
 
-void init_paging() {
-  info("Initializing paging");
+void custom_memset(u8int *address, u32int val, u32int size) {
+  for (u32int i = 0; i < size; ++i) {
+    *address = val;
+    ++address;
+  }
+}
 
-  // listen for page faults
-  register_interrupt_handler(14, handle_page_fault);
+void init_paging(u32int kernelPhysicalEnd) {
 
-  debug("boot_page_directory=%x", &boot_page_directory);
+  set_physical_address_top(kernelPhysicalEnd);
+  /* The size of physical memory.
+   * Assuming it is 16MB big
+   */
+  u32int mem_end_page = 0x1000000;
 
-  load_page_directory(&boot_page_directory);
-  enable_paging();
-  info("Paging enabled");
+  nframes = mem_end_page / 0x1000;
+  frames = (u32int *)kmalloc(INDEX_FROM_BIT(nframes) + 1);
+  custom_memset((u8int *)frames, 0, INDEX_FROM_BIT(nframes));
 
-  char message[] = "Paging enabled successfully!!\n";
-  serial_write(0x3F8,message,sizeof(message));
+  // Let's make a page directory.
+  g_kernelDirectory = (page_directory_t *)kmalloc_a(sizeof(page_directory_t));
+  g_currentDirectory = g_kernelDirectory;
+
+  /* We need to identity map (phys addr = virt addr) from 0x0 to the end of
+   * used memory, so we can access this transparently, as if paging wasn't
+   * enabled.
+   */
+  u32int i = 0;
+  while (i < g_CurrentPhysicalAddressTop) {
+    // Kernel code is readable but not writeable from userspace.
+    alloc_frame(get_page(i, 1, g_kernelDirectory), 0, 0);
+    i += 0x1000;
+  }
+  // Before we enable paging, we must register our page fault handler.
+  //register_interrupt_handler(14, page_fault);
+
+  // Now, enable paging!
+  switch_page_directory(g_kernelDirectory);
+}
+
+void switch_page_directory(page_directory_t *dir) {
+  g_currentDirectory = dir;
+  // Write page table physical address to cr3
+  asm volatile("mov %0, %%cr3" ::"r"(&dir->tablesPhysical));
+  u32int cr0;
+  // Read cr0 register to variable cr0
+  asm volatile("mov %%cr0, %0" : "=r"(cr0));
+  // Enable paging!
+  cr0 |= 0x80000000;
+  // Write back to cr0
+  asm volatile("mov %0, %%cr0" ::"r"(cr0));
+}
+
+page_t *get_page(u32int address, u8int make, page_directory_t *dir) {
+  // Turn the address into an index.
+  address /= 0x1000;
+  // Find the page table containing this address.
+  u32int tableIdx = address / 1024;
+  // If this table is already assigned
+  if (dir->tables[tableIdx]) {
+    return &dir->tables[tableIdx]->pages[address % 1024];
+  } else if (make) {
+    u32int tmp;
+    dir->tables[tableIdx] =
+        (page_table_t *)kmalloc_ap(sizeof(page_table_t), &tmp);
+        custom_memset((u8int *)dir->tables[tableIdx], 0, 0x1000);
+    // PRESENT, RW, US.
+    dir->tablesPhysical[tableIdx] = tmp | 0x7;
+    return &dir->tables[tableIdx]->pages[address % 1024];
+  } else {
+    return 0;
+  }
 }
