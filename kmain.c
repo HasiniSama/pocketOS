@@ -6,7 +6,7 @@
 #include "memory/paging/paging.h"
 
 /* Function to initialize */
-void init(u32int kernelPhysicalEnd) {
+ void init(u32int kernelPhysicalStart, u32int kernelPhysicalEnd) {
   /* Initialize segment descriptor tables */
   init_gdt();
 
@@ -14,7 +14,7 @@ void init(u32int kernelPhysicalEnd) {
   serial_configure(SERIAL_COM1_BASE, Baud_115200);
   
   /* Initialize paging */
-  init_paging(kernelPhysicalEnd);
+  init_paging(kernelPhysicalStart, kernelPhysicalEnd);
   
   /* Initialize idt */
   interrupts_install_idt();
@@ -22,10 +22,10 @@ void init(u32int kernelPhysicalEnd) {
 }
 
 /* Kernel Main */
-int kmain(u32int kernelPhysicalEnd){
+ s32int kmain(u32int kernelPhysicalStart, u32int kernelPhysicalEnd) {
 	
     	// Initialize all modules
-  	init(kernelPhysicalEnd);
+   	init(kernelPhysicalStart, kernelPhysicalEnd);
   	 
   	return 0;
 }

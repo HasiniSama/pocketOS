@@ -3,7 +3,6 @@
 
 #pragma once
 #include "../../utils/type.h"
-#include "../../utils/common.c"
 
 typedef struct page {
   /* Page is present in memory if set */

@@ -107,6 +107,13 @@ void free_frame(page_t *page) {
   }
 }
 
+void custom_memset(u8int *address, u32int val, u32int size) {
+  for (u32int i = 0; i < size; ++i) {
+    *address = val;
+    ++address;
+  }
+}
+
  void init_paging(u32int kerNelPhysicalStart, u32int kernelPhysicalEnd) {
 
    set_physical_address(kerNelPhysicalStart, kernelPhysicalEnd);
@@ -137,8 +144,6 @@ void free_frame(page_t *page) {
   }
   
   while (i < g_CurrentPhysicalAddressTop) {
-    // Kernel code is readable but not writeable from userspace.
-    alloc_frame(get_page(i, 1, g_kernelDirectory), 0, 0);
     /* Since we have already relocated kernel to 1MB after 3GB in linker script,
      * we can add entry to page table by adding 3Gb to all the physical
      * address.

@@ -6,6 +6,6 @@
 
 /* Helper function for memset, used in paging and heap
  */
-void custom_memset(u8int *address, u32int val, u32int size);
+//void custom_memset(u8int *address, u32int val, u32int size);
 
 #endif 
