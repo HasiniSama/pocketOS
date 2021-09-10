@@ -3,9 +3,11 @@
 
 #define KEYBOARD_MAX_ASCII 83 
 
-unsigned char keyboard_read_scan_code(void);
+#include "../../utils/type.h"
 
-unsigned char keyboard_scan_code_to_ascii(unsigned char);
+u8int keyboard_read_scan_code(void);
+
+u8int keyboard_scan_code_to_ascii(u8int);
 
 #endif /* INCLUDE_KEYBOARD_H */
 

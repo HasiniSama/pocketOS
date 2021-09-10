@@ -12,7 +12,7 @@
 
 static gdt_entry_t gdt_entries[SEGMENT_DESCRIPTOR_COUNT];
 
-void gdt_set_gate(int index, unsigned int base_address, unsigned int limit, unsigned char access_byte, unsigned char gran)
+void gdt_set_gate(s32int index, u32int base_address, u32int limit, u8int access_byte, u8int gran)
 {
 	gdt_entries[index].base_low = base_address & 0xFFFF;
 	gdt_entries[index].base_middle = (base_address >> 16) & 0xFF;
@@ -50,13 +50,13 @@ void init_gdt()
 {
 	gdt_ptr_t gdt_ptr;
 	gdt_ptr.size = (sizeof(gdt_entry_t) * 3) - 1;
-	gdt_ptr.address = (unsigned int)&gdt_entries;
+	gdt_ptr.address = (u32int)&gdt_entries;
 
   	gdt_set_gate(0, 0, 0, 0, 0);                // Null segment
   	
   	gdt_set_gate(1, SEGMENT_BASE, SEGMENT_LIMIT, SEGMENT_CODE_TYPE, SEGMENT_GRANULARITY); // Kernel Code segment
   	gdt_set_gate(2, SEGMENT_BASE, SEGMENT_LIMIT, SEGMENT_DATA_TYPE, SEGMENT_GRANULARITY); // Kernel Data segment
 
-  	gdt_flush((unsigned int)&gdt_ptr);
+  	gdt_flush((u32int)&gdt_ptr);
 	
 }

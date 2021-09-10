@@ -8,14 +8,14 @@
  *  @return The scan code (NOT an ASCII character!)
  */
 
-unsigned char keyboard_read_scan_code(void)
+u8int keyboard_read_scan_code(void)
 {
 	return inb(KEYBOARD_DATA_PORT);
 }
 
-unsigned char keyboard_scan_code_to_ascii(unsigned char scan_code)
+u8int keyboard_scan_code_to_ascii(u8int scan_code)
 {
-	unsigned char ascii[256] =
+	u8int ascii[256] =
 	{
 		0x0, 0x0, '1', '2', '3', '4', '5', '6',		// 0 - 7
 		'7', '8', '9', '0', '-', '=', 0x0, 0x0,		// 8 - 15

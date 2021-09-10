@@ -10,9 +10,9 @@
 struct IDTDescriptor idt_descriptors[INTERRUPTS_DESCRIPTOR_COUNT];
 struct IDT idt;
 
-unsigned int BUFFER_COUNT;
+u32int BUFFER_COUNT;
 
-void interrupts_init_descriptor(int index, unsigned int address)
+void interrupts_init_descriptor(s32int index, u32int address)
 {
 	idt_descriptors[index].offset_high = (address >> 16) & 0xFFFF; // offset bits 0..15
 	idt_descriptors[index].offset_low = (address & 0xFFFF); // offset bits 16..31
@@ -35,12 +35,12 @@ void interrupts_init_descriptor(int index, unsigned int address)
 
 void interrupts_install_idt()
 {
-	interrupts_init_descriptor(INTERRUPTS_KEYBOARD, (unsigned int) interrupt_handler_33);
+	interrupts_init_descriptor(INTERRUPTS_KEYBOARD, (u32int) interrupt_handler_33);
 
 
-	idt.address = (int) &idt_descriptors;
+	idt.address = (s32int) &idt_descriptors;
 	idt.size = sizeof(struct IDTDescriptor) * INTERRUPTS_DESCRIPTOR_COUNT;
-	load_idt((int) &idt);
+	load_idt((s32int) &idt);
 
 	/*pic_remap(PIC_PIC1_OFFSET, PIC_PIC2_OFFSET);*/
 	pic_remap(PIC_1_OFFSET, PIC_2_OFFSET);
@@ -49,10 +49,10 @@ void interrupts_install_idt()
 
 /* Interrupt handlers ********************************************************/
 
-void interrupt_handler(__attribute__((unused)) struct cpu_state cpu, unsigned int interrupt, __attribute__((unused)) struct stack_state stack)
+void interrupt_handler(__attribute__((unused)) struct cpu_state cpu, u32int interrupt, __attribute__((unused)) struct stack_state stack)
 {
-	unsigned char scan_code;
-	unsigned char ascii;
+	u8int scan_code;
+	u8int ascii;
 
 	switch (interrupt){
 		case INTERRUPTS_KEYBOARD:
@@ -61,7 +61,7 @@ void interrupt_handler(__attribute__((unused)) struct cpu_state cpu, unsigned in
 
 			if (scan_code <= KEYBOARD_MAX_ASCII) {
 				ascii = keyboard_scan_code_to_ascii(scan_code);
-				char str[1];
+				s8int str[1];
 				str[0] = ascii;
 				if(scan_code == 14 ){
 					BUFFER_COUNT--;

@@ -2,6 +2,7 @@
 #include "memory/segmentation/memory_segments.h"
 #include "drivers/interrupts/interrupts.h"
 #include "multiboot.h"
+#include "utils/type.h"
 
 /* Function to initialize */
 void init() {
@@ -16,15 +17,15 @@ void init() {
 }
 
 /* Kernel Main */
-int kmain(unsigned int ebx){
+int kmain(u32int ebx){
     	init();
     	
   	multiboot_info_t *mbinfo = (multiboot_info_t *) ebx;
   	multiboot_module_t* modules = (multiboot_module_t*) mbinfo->mods_addr; 
-  	unsigned int address_of_module = modules->mod_start;
+  	u32int address_of_module = modules->mod_start;
   	
   	if((mbinfo->mods_count) == 1){
-  		char message[] = "ONE module loaded successfully!";
+  		s8int message[] = "ONE module loaded successfully!";
   		serial_write(0x3F8,message,sizeof(message));
   		
   		typedef void (*call_module_t)(void);
@@ -34,7 +35,7 @@ int kmain(unsigned int ebx){
         	/* we'll never get here, unless the module code returns */
 
   	}else{
-  		char message[] = "Error: More than ONE module loaded";
+  		s8int message[] = "Error: More than ONE module loaded";
   		serial_write(0x3F8,message,sizeof(message));
   	}
   	 
