@@ -17,6 +17,9 @@
 
 	; calculate the checksum (all options + checksum should equal 0)
     	CHECKSUM equ - (MAGIC_NUMBER + FLAGS)
+	
+	; Kernel Start Physical Address is exported from linker script
+	extern KERNEL_PHYSICAL_START
 
 	; Kernel End Physical Address is exported from linker script
 	extern KERNEL_PHYSICAL_END
@@ -40,8 +43,8 @@
     	
     	extern kmain			; kmain function is defined elsewhere
     	
-    	push $KERNEL_PHYSICAL_END	; and the kernel end address
-    	
+    	push $KERNEL_PHYSICAL_END	; the kernel end address
+    	push $KERNEL_PHYSICAL_START 	; and the kernel start address
     	call kmain			; call kernel main function.
     .loop:
     	; loop forever

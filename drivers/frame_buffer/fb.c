@@ -1,6 +1,6 @@
 #include "fb.h"	
 
-static s8int *fb = (s8int *)0x000B8000;
+static s8int *fb = (s8int *)0xC00B8000;
 
 void fb_move_cursor(u16int pos) {
 	outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
