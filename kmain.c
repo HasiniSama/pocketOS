@@ -4,6 +4,7 @@
 #include "multiboot.h"
 #include "utils/type.h"
 #include "memory/paging/paging.h"
+#include "memory/heap/kheap.h"
 
 /* Function to initialize */
  void init(u32int kernelPhysicalStart, u32int kernelPhysicalEnd) {
