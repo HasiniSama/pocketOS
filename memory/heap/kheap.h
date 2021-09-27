@@ -19,7 +19,7 @@
  *
  *  @param phyAddress Current Address End, we get this from linker script.
  */
- void set_physical_address(u32int kerNelPhysicalStart, u32int kernelPhysicalEnd);
+void set_physical_address_top(u32int phyAddress);
 
 /* create_kernel_heap:
  *  Create a new kernel heap.

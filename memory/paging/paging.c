@@ -97,7 +97,7 @@ void custom_memset(u8int *address, u32int val, u32int size) {
   }
 }
 
- void init_paging(u32int kerNelPhysicalStart, u32int kernelPhysicalEnd) {
+void init_paging(u32int kernelPhysicalEnd) {
 
   set_physical_address_top(kernelPhysicalEnd);
 
