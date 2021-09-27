@@ -24,8 +24,7 @@ typedef struct {
  *  @param compare  Function pointer for compare (Array is sorted based on the
  *                  compare function either in ascending or in descending order)
  */
-ordered_array_t create_ordered_array(u32int maxSize,
-                                     compare_predicate_t compare);
+ordered_array_t create_ordered_array(u32int maxSize, compare_predicate_t compare);
 
 /* place_ordered_array:
  *  Place array at specified address.
@@ -36,8 +35,7 @@ ordered_array_t create_ordered_array(u32int maxSize,
  *  @param compare  Function pointer for compare (Array is sorted based on the
  *                  compare function either in ascending or in descending order)
  */
-ordered_array_t place_ordered_array(void *addr, u32int max_size,
-                                    compare_predicate_t compare);
+ordered_array_t place_ordered_array(void *addr, u32int max_size, compare_predicate_t compare);
 
 /* destroy_ordered_array:
  *  Destructor for the ordered array.

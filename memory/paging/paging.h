@@ -34,9 +34,7 @@ typedef struct page_table {
 } page_table_t;
 
 typedef struct page_directory {
-  /*
-   * Array of pointers to pagetables.
-   */
+  /* Array of pointers to pagetables. */
   page_table_t *tables[1024];
 
   /*
@@ -53,20 +51,47 @@ typedef struct page_directory {
   u32int physicalAddr;
 } page_directory_t;
 
-/*
- * Sets up the environment, page directories etc and enables paging.
+/** init_paging:
+ *  Sets up the environment, page directories etc and enables paging.
+ *
+ *  @param kernelPhysicalEnd Physical address of location where loaded kernel
+ *  ends
  */
- void init_paging(u32int kernelPhysicalEnd);
+void init_paging(u32int kernelPhysicalEnd);
 
-/*
- * Causes the specified page directory to be loaded into the CR3 register.
+/** switch_page_directory:
+ *  Causes the specified page directory to be loaded into the CR3 register.
+ *
+ *  @param new Address of the new page directory to be switched to.
  */
 void switch_page_directory(page_directory_t *new);
 
-/*
- * Retrieves a pointer to the page required. If make == 1, if the page-table in
- * which this page should reside isn't created, create it!
+/** get_page:
+ *  Retrieves a pointer to the page required. If make == 1, if the page-table in
+ *  which this page should reside isn't created, create it!
+ *
+ *  @param address  Physical address is for which the virtual page is required
+ *  @param make     Create page table if not created already.
+ *  @param dir      Pointer to the page directory
  */
 page_t *get_page(u32int address, u8int make, page_directory_t *dir);
+
+/** alloc_frame:
+ *  Marks that the frame is allocated based on the index calculated by page
+ *  address. Also sets the page attributes in page table
+ *
+ *  @param page         Pointer to page address
+ *  @param isKernel     If set, marks page accesible only in kernel mode
+ *  @param isWriteable  If not set, markes page as read only
+ */
+void alloc_frame(page_t *page, u32int isKernel, u32int isWriteable);
+
+/** free_frame:
+ *  Marks the current page frame as not present and removes it from the list of
+ *  frames that exist
+ *
+ *  @param page         Pointer to page address
+ */
+void free_frame(page_t *page);
 
 #endif /* INCLUDE_PAGING_H */

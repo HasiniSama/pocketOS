@@ -12,12 +12,20 @@ page_directory_t *g_currentDirectory = 0;
 u32int *frames;
 u32int nframes;
 
-// Defined in kheap.c
+/*
+ * Accessing g_CurrentPhysicalAddressTop defined in kheap.c through extern since
+ * we use it in page_fault handler
+ */
 extern u32int g_CurrentPhysicalAddressTop;
 
 // Macros used in the bitset algorithms.
 #define INDEX_FROM_BIT(a) (a / 32)
 #define OFFSET_FROM_BIT(a) (a % 32)
+
+/* Page Fault interrupt handler function forward declaration, definition towards
+ * the end
+ */
+//void page_fault(registers_t regs);
 
 // Static function to set a bit in the frames bitset
 static void set_frame(u32int frameAddr) {
@@ -35,21 +43,13 @@ static void clear_frame(u32int frameAddr) {
   frames[idx] &= ~(0x1 << off);
 }
 
-// // Static function to test if a bit is set.
-// static u32int test_frame(u32int frameAddr) {
-//   u32int frame = frameAddr / 0x1000;
-//   u32int idx = INDEX_FROM_BIT(frame);
-//   u32int off = OFFSET_FROM_BIT(frame);
-//   return (frames[idx] & (0x1 << off));
-// }
-
 // Static function to find the first free frame.
 static s32int first_frame() {
   u32int i, j;
-   for (i = 0; i < INDEX_FROM_BIT(nframes); ++i) {
+  for (i = 0; i < INDEX_FROM_BIT(nframes); ++i) {
     if (frames[i] != 0xFFFFFFFF) {
       // at least one bit is free here.
-       for (j = 0; j < 32; ++j) {
+      for (j = 0; j < 32; ++j) {
         u32int toTest = 0x1 << j;
         if (!(frames[i] & toTest)) {
           return ((i * 32) + j);
@@ -61,13 +61,14 @@ static s32int first_frame() {
   return -1;
 }
 
-// Function to allocate a frame.
 void alloc_frame(page_t *page, u32int isKernel, u32int isWriteable) {
   if (page->frame != 0) {
     return;
   } else {
     u32int idx = first_frame();
     if (idx == (u32int)-1) {
+      // PANIC! no free frames!!
+      //print_screen("No Free Frame, Kernel Panic");
       while (1) {
       }
     }
@@ -79,7 +80,6 @@ void alloc_frame(page_t *page, u32int isKernel, u32int isWriteable) {
   }
 }
 
-// Function to deallocate a frame.
 void free_frame(page_t *page) {
   u32int frame;
   if (!(frame = page->frame)) {
@@ -100,34 +100,54 @@ void custom_memset(u8int *address, u32int val, u32int size) {
 void init_paging(u32int kernelPhysicalEnd) {
 
   set_physical_address_top(kernelPhysicalEnd);
-  /* The size of physical memory.
-   * Assuming it is 16MB big
-   */
-  u32int mem_end_page = 0x1000000;
 
-  nframes = mem_end_page / 0x1000;
-  frames = (u32int *)kmalloc(INDEX_FROM_BIT(nframes) + 1);
+  /*
+   * The size of physical memory.
+   * Assuming it is KHEAP_MAX_ADDRESS big
+   */
+  u32int memPageEnd = KHEAP_MAX_ADDRESS;
+
+  nframes = (memPageEnd / 0x1000) + 1;
+  frames = (u32int *)kmalloc(INDEX_FROM_BIT(nframes));
   custom_memset((u8int *)frames, 0, INDEX_FROM_BIT(nframes));
 
-  // Let's make a page directory.
+  // Create a page directory.
   g_kernelDirectory = (page_directory_t *)kmalloc_a(sizeof(page_directory_t));
+  custom_memset((u8int *)g_kernelDirectory, 0, sizeof(page_directory_t));
   g_currentDirectory = g_kernelDirectory;
+
+  /*
+   * Call to get pages only forces page tables to be created. We will map them
+   * before we actually allocate
+   */
+  u32int i = 0;
+  for (i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
+    get_page(i, 1, g_kernelDirectory);
 
   /* We need to identity map (phys addr = virt addr) from 0x0 to the end of
    * used memory, so we can access this transparently, as if paging wasn't
    * enabled.
    */
-  u32int i = 0;
-  while (i < g_CurrentPhysicalAddressTop) {
+  i = 0;
+  while (i < g_CurrentPhysicalAddressTop + 0x1000) {
     // Kernel code is readable but not writeable from userspace.
     alloc_frame(get_page(i, 1, g_kernelDirectory), 0, 0);
     i += 0x1000;
   }
+
+  /* Now allocate those pages for heap */
+  for (i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
+    alloc_frame(get_page(i, 1, g_kernelDirectory), 0, 0);
+
   // Before we enable paging, we must register our page fault handler.
   //register_interrupt_handler(14, page_fault);
 
   // Now, enable paging!
   switch_page_directory(g_kernelDirectory);
+
+  // Initialise the kernel heap.
+  create_kernel_heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE,
+                     KHEAP_MAX_ADDRESS);
 }
 
 void switch_page_directory(page_directory_t *dir) {
@@ -155,7 +175,7 @@ page_t *get_page(u32int address, u8int make, page_directory_t *dir) {
     u32int tmp;
     dir->tables[tableIdx] =
         (page_table_t *)kmalloc_ap(sizeof(page_table_t), &tmp);
-        custom_memset((u8int *)dir->tables[tableIdx], 0, 0x1000);
+    custom_memset((u8int *)dir->tables[tableIdx], 0, 0x1000);
     // PRESENT, RW, US.
     dir->tablesPhysical[tableIdx] = tmp | 0x7;
     return &dir->tables[tableIdx]->pages[address % 1024];

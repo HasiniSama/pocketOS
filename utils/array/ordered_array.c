@@ -1,11 +1,18 @@
 #include "ordered_array.h"
 #include "../../memory/heap/kheap.h"
 
+void custom_memset_array(u8int *address, u32int val, u32int size) {
+  for (u32int i = 0; i < size; ++i) {
+    *address = val;
+    ++address;
+  }
+}
+
 ordered_array_t create_ordered_array(u32int maxSize,
                                      compare_predicate_t compare) {
   ordered_array_t toRet;
   toRet.array = (type_t *)kmalloc(maxSize * sizeof(type_t));
-  custom_memset((u8int *)toRet.array, 0, maxSize * sizeof(type_t));
+  custom_memset_array((u8int *)toRet.array, 0, maxSize * sizeof(type_t));
   toRet.size = 0;
   toRet.maxSize = maxSize;
   toRet.compare = compare;
@@ -16,7 +23,7 @@ ordered_array_t place_ordered_array(void *address, u32int maxSize,
                                     compare_predicate_t compare) {
   ordered_array_t toRet;
   toRet.array = (type_t *)address;
-  custom_memset((u8int *)toRet.array, 0, maxSize * sizeof(type_t));
+  custom_memset_array((u8int *)toRet.array, 0, maxSize * sizeof(type_t));
   toRet.size = 0;
   toRet.maxSize = maxSize;
   toRet.compare = compare;
