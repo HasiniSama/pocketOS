@@ -5,6 +5,8 @@
 #include "utils/type.h"
 #include "memory/paging/paging.h"
 #include "memory/heap/kheap.h"
+#include "user_mode.h"
+#include "drivers/interrupts/hardware_interrupt_enabler.h"
 
 /* Function to initialize */
 void init(u32int kernelPhysicalEnd) {
@@ -27,6 +29,12 @@ int kmain(u32int kernelPhysicalEnd){
 	
     	// Initialize all modules
   	init(kernelPhysicalEnd);
-  	 
+  	
+  	disable_hardware_interrupts();
+  	
+  	// Switch to User mode
+   	switch_to_user_mode();
+   	
+	 
   	return 0;
 }
