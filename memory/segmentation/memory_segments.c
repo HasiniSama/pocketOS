@@ -58,7 +58,7 @@ void init_gdt()
   	
   	gdt_set_gate(1, SEGMENT_BASE, SEGMENT_LIMIT, KERNEL_SEGMENT_CODE_TYPE, SEGMENT_GRANULARITY); 	// Kernel Code segment
   	gdt_set_gate(2, SEGMENT_BASE, SEGMENT_LIMIT, KERNEL_SEGMENT_DATA_TYPE, SEGMENT_GRANULARITY); 	// Kernel Data segment
-  	gdt_set_gate(3, SEGMENT_BASE, SEGMENT_LIMIT, USER_SEGMENT_CODE_TYPE, SEGMENT_GRANULARITY); 	// User Code segment
+  	gdt_set_gate(3, 3, SEGMENT_LIMIT, USER_SEGMENT_CODE_TYPE, SEGMENT_GRANULARITY); 	// User Code segment
   	gdt_set_gate(4, SEGMENT_BASE, SEGMENT_LIMIT, USER_SEGMENT_DATA_TYPE, SEGMENT_GRANULARITY); 	// User Data segment
 
   	gdt_flush((u32int)&gdt_ptr);
