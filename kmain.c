@@ -6,7 +6,7 @@
 #include "memory/paging/paging.h"
 #include "memory/heap/kheap.h"
 #include "user_mode.h"
-#include "hardware_interrupt_enabler.h"
+#include "drivers/interrupts/hardware_interrupt_enabler.h"
 
 /* Function to initialize */
 void init(u32int kernelPhysicalEnd) {
