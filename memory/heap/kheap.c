@@ -28,6 +28,7 @@ typedef struct {
   header_t *header; // Pointer to the block header.
 } footer_t;
 
+u32int g_KerNelPhysicalAddressStart = 0;
 u32int g_CurrentPhysicalAddressTop = 0;
 heap_t *g_KernelHeap = 0;
 
@@ -37,7 +38,9 @@ heap_t *g_KernelHeap = 0;
  */
 extern page_directory_t *g_kernelDirectory;
 
-void set_physical_address_top(u32int kernelPhysicalEnd) {
+void set_physical_address(u32int kerNelPhysicalStart,
+                          u32int kernelPhysicalEnd) {
+  g_KerNelPhysicalAddressStart = kerNelPhysicalStart;
   g_CurrentPhysicalAddressTop = kernelPhysicalEnd;
 }
 
